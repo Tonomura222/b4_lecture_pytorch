@@ -43,6 +43,9 @@ class NeuralNetwork(nn.Module):
         super(NeuralNetwork, self).__init__()
         self.flatten = nn.Flatten()
         self.linear_relu_stack = nn.Sequential(
+            nn.Conv2d(1, 32, 3),
+            nn.ReLU(),
+            nn.MaxPool2d(2),
             nn.Linear(28*28, 512),
             nn.ReLU(),
             nn.Linear(512, 512),
