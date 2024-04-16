@@ -37,29 +37,27 @@ for X, y in test_dataloader:
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using {} device".format(device))
 
-# modelを定義します
-class NeuralNetwork(nn.Module):
+# CNNを用いたモデル
+# sequentialを使わない書き方
+class CNN_model(nn.Module):
     def __init__(self):
-        super(NeuralNetwork, self).__init__()
-        self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Conv2d(1, 32, 3),
-            nn.ReLU(),
-            nn.MaxPool2d(2),
-            nn.Linear(28*28, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 10),
-            nn.ReLU()
-        )
+        super(CNN_model, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, stride=1, padding=1)
+        self.fc1 = nn.Linear(32 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
-        x = self.flatten(x)
-        logits = self.linear_relu_stack(x)
+        x = torch.relu(self.conv1(x))
+        x = torch.max_pool2d(x, kernel_size=2, stride=2)
+        x = torch.relu(self.conv2(x))
+        x = torch.max_pool2d(x, kernel_size=2, stride=2)
+        x = x.view(-1, 32 * 7 * 7)
+        x = torch.relu(self.fc1(x))
+        logits = self.fc2(x)
         return logits
 
-model = NeuralNetwork().to(device)
+model = CNN_model().to(device)
 print(model)
 
 loss_fn = nn.CrossEntropyLoss()
