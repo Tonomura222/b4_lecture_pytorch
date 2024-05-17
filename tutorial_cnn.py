@@ -2,6 +2,7 @@ import os
 
 import torch
 from torch import nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 from torch.utils.data import Subset
 from torchvision import datasets
@@ -9,7 +10,6 @@ from torchvision.transforms import ToTensor, Lambda, Compose
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# 訓練データをdatasetsからダウンロード
 training_data = datasets.FashionMNIST(
     root="data",
     train=True,
@@ -17,7 +17,6 @@ training_data = datasets.FashionMNIST(
     transform=ToTensor(),
 )
 
-# テストデータをdatasetsからダウンロード
 test_data = datasets.FashionMNIST(
     root="data",
     train=False,
@@ -25,7 +24,6 @@ test_data = datasets.FashionMNIST(
     transform=ToTensor(),
 )
 
-#Subsetを用いて、もとの学習用画像60000枚を学習用50000枚と検証用10000枚に分割
 train_size = 50000
 train_indices = list(range(0,train_size))
 valid_indices = list(range(train_size, len(training_data)))
@@ -35,7 +33,7 @@ valid_data = Subset(training_data, valid_indices)
 print(len(train_data), len(valid_data))
 
 batch_size = 64
-# データローダーの作成
+
 train_dataloader = DataLoader(train_data, batch_size=batch_size)
 validation_dataloader = DataLoader(valid_data, batch_size=batch_size)
 test_dataloader = DataLoader(test_data, batch_size=batch_size)
@@ -47,26 +45,28 @@ for X, y in test_dataloader:
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 print("Using {} device".format(device))
-# modelの定義
-class NeuralNetwork(nn.Module):
+
+# CNNを用いたモデル
+class CNN_model(nn.Module):
     def __init__(self):
-        super(NeuralNetwork, self).__init__()
+        super(CNN_model, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3, padding=1)
         self.flatten = nn.Flatten()
-        self.linear_relu_stack = nn.Sequential(
-            nn.Linear(28*28, 512),
-            nn.ReLU(),
-            nn.Linear(512, 512),
-            nn.ReLU(),
-            nn.Linear(512, 10),
-            nn.ReLU()
-        )
+        self.fc1 = nn.Linear(32 * 7 * 7, 128)
+        self.fc2 = nn.Linear(128, 10)
 
     def forward(self, x):
+        x = torch.relu(self.conv1(x))
+        x = torch.max_pool2d(x, kernel_size=2, stride=2)
+        x = torch.relu(self.conv2(x))
+        x = torch.max_pool2d(x, kernel_size=2, stride=2)
         x = self.flatten(x)
-        logits = self.linear_relu_stack(x)
+        x = torch.relu(self.fc1(x))
+        logits = self.fc2(x)
         return logits
 
-model = NeuralNetwork().to(device)
+model = CNN_model().to(device)
 print(model)
 
 loss_fn = nn.CrossEntropyLoss()
@@ -78,17 +78,15 @@ def train(dataloader, model, loss_fn, optimizer):
     epoch_loss = 0
     for batch, (X, y) in enumerate(dataloader):
         X, y = X.to(device), y.to(device)
-        # 損失誤差を計算
         pred = model(X)
         loss = loss_fn(pred, y)
         epoch_loss += loss.item()
-        # バックプロパゲーション
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
         if batch % 100 == 0:
             loss, current = loss.item(), batch * len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]") #表示している損失はバッチ全体の損失
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
     epoch_loss /= size
     return epoch_loss
 
@@ -130,7 +128,7 @@ def test(dataloader, model):
 
 epochs = 5
 min_loss = 1000
-model_path = "model/nn/"
+model_path = "model/cnn/"
 result_dir = "result/"
 os.makedirs(model_path, exist_ok=True)
 os.makedirs(result_dir, exist_ok=True)
@@ -148,17 +146,17 @@ for t in range(epochs):
         min_loss = validation_loss
     torch.save(model.state_dict(), model_path+"model_"+str(t+1)+".pth")
 
-model = NeuralNetwork().to(device)
+model = CNN_model().to(device)
 model.load_state_dict(torch.load(model_path+"model_"+str(best_epoch)+".pth"))
 df_label_pred = test(test_dataloader, model)
-df_label_pred.to_csv(result_dir+"test_nn.csv")
+df_label_pred.to_csv(result_dir+"test_cnn.csv")
 
 print(f"Best Epoch: {best_epoch}")
 print("Done!")
 
 plt.plot(train_losses, label="train")
-plt.plot(validation_losses, label="validataion")
+plt.plot(validation_losses, label="validation")
 plt.xlabel("epochs")
 plt.ylabel("loss")
 plt.legend()
-plt.savefig(os.path.join(result_dir,"loss_nn.jpg"))
+plt.savefig(os.path.join(result_dir, "loss_cnn"))
