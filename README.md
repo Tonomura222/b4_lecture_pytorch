@@ -21,5 +21,4 @@ https://yutaroogawa.github.io/pytorch_tutorials_jp/
 モデルをResNet-18に変更  
 NN, CNNとのテスト結果の比較も行う
 
-## segmentation
 
