@@ -1,24 +1,49 @@
 # B4輪講　PyTorch
 
-このサイトの0 PyTorch入門 [8]クイックスタートをもとに作りました  
+基本はこのサイトの0 PyTorch入門 [8]クイックスタートをもとに作りました  
 https://yutaroogawa.github.io/pytorch_tutorials_jp/
 
 `tutorial.ipynb`はサイトのコードと同じ
 
 ## validation追加
 コードは`tutorial_v.ipynb`  
-学習用のうち10000枚を検証用に使用
-
-各epochで検証データに対する損失を求め、その損失が最小のepochのモデルでテストを行う  
-以降はすべてvalidationあり
+学習用画像のうち10000枚を検証に使用し、検証のlossで最適epochを決定  
+`tutorial_v.py`はそのままつなげてpythonファイルにしたもの
+pythonかpython3で実行  
+```
+python3 tutorial_v.py
+```
 
 ## CNNモデル
-`tutorial_cnn.ipynb`
+`tutorial_cnn.ipynb`, `tutorial_cnn.py`
 モデルを畳み込みに変更
 
 ## ResNetモデル
-`tutorial_resnet.ipynb`
+`tutorial_resnet.ipynb`, `tutorial_resnet.py`
 モデルをResNet-18に変更  
-NN, CNNとのテスト結果の比較も行う
 
+3つのテスト結果のcsvがあれば`compare_results.py` を実行して比較
+```
+python3 compare_results.py
+```
 
+## ペットのセグメンテーション
+`oxfordpet_segmentation.ipynb`, `oxfordpet_segmentation.py`  
+データセットはOxford IIIT Pets Segmentation  
+
+このサイトを参考にしました。
+https://www.kaggle.com/code/dhruv4930/oxford-iiit-pets-segmentation-using-pytorch
+
+入力画像  
+![alt text](image.png)  
+正解ラベル  
+![alt text](image-1.png)
+
+```
+python3 oxfordpet_segmentation.py
+```
+
+- epochごとのvalidationの予測結果
+- テストの最良の例
+- 損失のグラフ
+などが保存されるはず

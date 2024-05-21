@@ -409,10 +409,11 @@ def save_samples(sample):
         plt.imshow(img,cmap="gray")
         plt.title(title)
         plt.axis("off")
-plt.savefig(os.path.join(result_dir,"best_dice.jpg"))
+    plt.savefig(os.path.join(result_dir,"best_dice.jpg"))   
 save_samples(best_sample)
 
 #損失の推移の保存
+plt.figure()
 plt.plot(train_losses, label="train")
 plt.plot(validation_losses, label="validation")
 plt.xlabel("epochs")
