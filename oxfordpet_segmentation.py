@@ -274,15 +274,14 @@ def calc_metrics(pred, tgt):
             pred_mask = F.one_hot(pred_mask, 3)
             tgt_mask = tgt_mask[:,:,c]
             pred_mask = pred_mask[:,:,c]
-            if tgt_mask.sum().item() != 0:
-                tp = torch.logical_and(tgt_mask, pred_mask).sum().item()
-                fp = torch.logical_and(~tgt_mask, pred_mask).sum().item()
-                fn = torch.logical_and(tgt_mask, ~pred_mask).sum().item()
-                tn = torch.logical_and(~tgt_mask, ~pred_mask).sum().item()
-                dice = 2*tp/(2*tp+fp+fn)
-                acc = (tp+tn)/(tp+tn+fp+fn)
-                present_dice_list.append(dice)
-                present_acc_list.append(acc)
+            tp = torch.logical_and(tgt_mask, pred_mask).sum().item()
+            fp = torch.logical_and(~tgt_mask, pred_mask).sum().item()
+            fn = torch.logical_and(tgt_mask, ~pred_mask).sum().item()
+            tn = torch.logical_and(~tgt_mask, ~pred_mask).sum().item()
+            dice = 2*tp/(2*tp+fp+fn)
+            acc = (tp+tn)/(tp+tn+fp+fn)
+            present_dice_list.append(dice)
+            present_acc_list.append(acc)
         mean_dice_list.append(np.mean(present_dice_list))
         mean_acc_list.append(np.mean(present_acc_list))
     return mean_dice_list, mean_acc_list
@@ -370,7 +369,7 @@ def test(dataloader, model):
     return best_sample, worst_sample
 
 # 
-epochs = 2
+epochs = 3
 min_loss = 100
 model_path = "model/oxfordpet"
 result_dir = "result/oxfordpet"
@@ -392,7 +391,7 @@ for t in range(epochs):
 print(f"best epoch: {best_epoch}")
 model = UNet_2D().to(device)
 model.load_state_dict(torch.load(os.path.join(result_dir, "model_"+str(best_epoch)+".pth")))
-best_sample = test(test_dataloader, model)
+best_sample, worst_sample = test(test_dataloader, model)
 
 # testの予測結果の保存
 
